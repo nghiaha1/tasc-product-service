@@ -8,4 +8,6 @@ import javax.persistence.PersistenceContext;
 public class CategoryExtentRepositoryImpl implements CategoryExtentRepository {
     @PersistenceContext
     Session session;
+
+
 }

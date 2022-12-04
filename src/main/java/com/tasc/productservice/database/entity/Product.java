@@ -38,6 +38,5 @@ public class Product extends BaseEntity {
 
     private int quantity;
 
-
     private Status status;
 }

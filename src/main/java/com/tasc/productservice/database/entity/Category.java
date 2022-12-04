@@ -25,25 +25,15 @@ public class Category extends BaseEntity {
 
     private String description;
 
-    private String detail;
-
     private String icon;
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "product_category",
-            joinColumns = @JoinColumn(name = "product_id"),
-            inverseJoinColumns = @JoinColumn(name = "category_id")
-    )
-    private Set<Category> categories;
-
-//    @ManyToMany(mappedBy = "categories")
-//    private Set<Product> products;
+//    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+//    @JoinTable(
+//            name = "category_relationship",
+//            joinColumns = @JoinColumn(name = "parent_id"),
+//            inverseJoinColumns = @JoinColumn(name = "child_id")
+//    )
+//    private Set<Category> categories;
 
     private int isRoot;
-
-    private Long parentId;
-
-//    @Column(columnDefinition = "VARCHAR(255) default = 'ACTIVE'")
-//    private Status status;
 }

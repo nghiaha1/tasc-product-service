@@ -1,5 +1,6 @@
 package com.tasc.productservice.controllers;
 
+import com.tasc.productservice.models.request.ProductRequest;
 import com.tasc.productservice.models.response.BaseResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

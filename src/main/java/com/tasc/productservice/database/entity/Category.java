@@ -1,16 +1,16 @@
 package com.tasc.productservice.database.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.tasc.productservice.database.entity.base.BaseEntity;
-import com.tasc.productservice.database.entity.enums.Status;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.tasc.productservice.utils.Constant;
+import lombok.*;
 
 import javax.persistence.*;
 import java.util.Set;
 
-@Data
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -27,13 +27,22 @@ public class Category extends BaseEntity {
 
     private String icon;
 
-//    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-//    @JoinTable(
-//            name = "category_relationship",
-//            joinColumns = @JoinColumn(name = "parent_id"),
-//            inverseJoinColumns = @JoinColumn(name = "child_id")
-//    )
-//    private Set<Category> categories;
+    @ManyToMany(mappedBy = "subCategories")
+    @JsonBackReference
+    private Set<Category> parent;
 
-    private int isRoot;
+    @ManyToMany
+    @JoinTable(
+            name = "category_relationship",
+            joinColumns = @JoinColumn(name = "parent_id"),
+            inverseJoinColumns = @JoinColumn(name = "child_id")
+    )
+    @JsonBackReference
+    private Set<Category> subCategories;
+
+    private Integer isRoot;
+
+    public boolean checkIsRoot() {
+        return isRoot == Constant.ONOFF.ON;
+    }
 }

@@ -1,8 +1,6 @@
 package com.tasc.productservice.services;
 
 import com.tasc.productservice.database.entity.Category;
-import com.tasc.productservice.database.entity.CategoryRelationship;
-import com.tasc.productservice.database.repository.CategoryRelationshipRepository;
 import com.tasc.productservice.database.repository.CategoryRepository;
 import com.tasc.productservice.database.specification.CategorySpecification;
 import com.tasc.productservice.database.specification.SearchBody;
@@ -11,6 +9,7 @@ import com.tasc.productservice.models.ApiException;
 import com.tasc.productservice.models.enums.ERROR;
 import com.tasc.productservice.models.request.CategoryRequest;
 import com.tasc.productservice.models.response.BaseResponse;
+import com.tasc.productservice.models.response.SearchCategoryResponse;
 import com.tasc.productservice.utils.Constant;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +20,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import javax.transaction.Transactional;
 import java.util.*;
@@ -34,21 +32,18 @@ public class CategoryService {
     @Autowired
     CategoryRepository categoryRepository;
 
-    @Autowired
-    CategoryRelationshipRepository categoryRelationshipRepository;
-
     @Transactional
     public BaseResponse findAllCategory(SearchBody searchBody) throws ApiException {
 
         Specification specification = Specification.where(null);
 
-        if (!StringUtils.isBlank(searchBody.getName())) {
+        if (StringUtils.isNotBlank(searchBody.getName())) {
             specification = specification.and(new CategorySpecification(
                     new SpecSearchCriteria("name", LIKE, "%" + searchBody.getName() + "%"))
             );
         }
 
-        if (!StringUtils.isBlank(searchBody.getDescription())) {
+        if (StringUtils.isNotBlank(searchBody.getDescription())) {
             specification = specification.and(new CategorySpecification(
                     new SpecSearchCriteria("description", LIKE, "%" + searchBody.getDescription() + "%"))
             );
@@ -62,7 +57,7 @@ public class CategoryService {
             }
         }
 
-        Pageable pageable = PageRequest.of(searchBody.getPage() - 1, searchBody.getLimit(), sort);
+        Pageable pageable = PageRequest.of(searchBody.getPage() - 1, searchBody.getPageSize(), sort);
         Page<Category> categories = categoryRepository.findAll(specification, pageable);
         List<Category> sortedCategories = categories.getContent();
 
@@ -74,6 +69,42 @@ public class CategoryService {
         responses.put("totalPage", categories.getTotalPages());
 
         return new BaseResponse<>(responses);
+    }
+
+//    @Transactional
+//    public SearchCategoryResponse search(Integer isRoot, String name, Integer page, Integer pageSize) {
+//        if (page == null || page < 1) {
+//            page = 1;
+//        } if (pageSize == null || page < 1) {
+//            pageSize = 10;
+//        }
+//
+//        SearchCategoryResponse.Data data = new SearchCategoryResponse.Data();
+//        data.setCurrentPage(page);
+//        data.setPageSize(pageSize);
+//
+//        categoryRepository.searchCategory(isRoot, name, page, pageSize, data);
+//
+//        SearchCategoryResponse response = new SearchCategoryResponse();
+//        response.setData(data);
+//        return response;
+//    }
+
+    @Transactional
+    public BaseResponse search(SearchBody searchBody) {
+
+        if (searchBody.getPage() < 1) {
+            searchBody.setPage(1);
+        }
+        if (searchBody.getPageSize() < 1) {
+            searchBody.setPageSize(1);
+        }
+
+        SearchCategoryResponse.Data data = new SearchCategoryResponse.Data();
+        data.setCurrentPage(searchBody.getPage());
+        data.setPageSize(searchBody.getPageSize());
+
+        return new BaseResponse(categoryRepository.findAll(searchBody, data));
     }
 
     @Transactional
@@ -93,24 +124,36 @@ public class CategoryService {
                 log.info("parent is invalid");
                 throw new ApiException(ERROR.INVALID_PARAM, "parent is invalid");
             }
+
+            Category parent = checkParentOpt.get();
+            Set<Category> setParent = new HashSet<>();
+            setParent.add(parent);
+
+            Category category = Category.builder()
+                    .name(request.getName())
+                    .icon(request.getIcon())
+                    .description(request.getDescription())
+                    .isRoot(request.checkIsRoot() ? Constant.ONOFF.ON : Constant.ONOFF.OFF)
+                    .parent(setParent)
+                    .subCategories(new HashSet<>())
+                    .build();
+
+            categoryRepository.save(category);
+
+            return new BaseResponse<>(category);
         }
+
 
         Category category = Category.builder()
                 .name(request.getName())
                 .icon(request.getIcon())
                 .description(request.getDescription())
+                .subCategories(new HashSet<>())
+                .parent(null)
                 .isRoot(request.checkIsRoot() ? Constant.ONOFF.ON : Constant.ONOFF.OFF)
                 .build();
 
         categoryRepository.save(category);
-
-        if (!request.checkIsRoot()) {
-            // create relationship
-            CategoryRelationship categoryRelationship = new CategoryRelationship();
-            CategoryRelationship.Pk pk = new CategoryRelationship.Pk(request.getParentId(), category.getId());
-            categoryRelationship.setPk(pk);
-            categoryRelationshipRepository.save(categoryRelationship);
-        }
 
         log.info("SUCCESS");
         return new BaseResponse<>(category);
@@ -124,24 +167,52 @@ public class CategoryService {
 
         Optional<Category> optionalCategory = categoryRepository.findById(id);
 
-        if (optionalCategory.isPresent()) {
-            Category category = Category.builder()
-                    .name(optionalCategory.get().getName())
-                    .description(optionalCategory.get().getDescription())
-                    .icon(optionalCategory.get().getIcon())
-                    .isRoot(optionalCategory.get().getIsRoot())
-                    .build();
-            categoryRepository.save(category);
-            return new BaseResponse<>(category);
+        if (!optionalCategory.isPresent()) {
+            log.debug("Not found category with id {} on database", id);
+            throw new ApiException(ERROR.INVALID_PARAM, "Category not found");
         }
-        throw new ApiException(ERROR.INVALID_PARAM, "Category not found");
+
+        Category category = optionalCategory.get();
+
+        if (request.getIsRoot() != null && category.getIsRoot() != request.getIsRoot()) {
+            log.debug("Request change category type from {} to type {}", category.getIsRoot(), request.getIsRoot());
+            throw new ApiException(ERROR.INVALID_PARAM);
+        }
+        category.setDescription(request.getDescription());
+        category.setIcon(request.getIcon());
+        category.setName(request.getName());
+
+        log.info("Edit category with id {} success", id);
+        categoryRepository.save(category);
+        return new BaseResponse<>(category);
     }
 
     @Transactional
     public BaseResponse deleteCategory(Long id) throws ApiException {
+
+        Optional<Category> optionalCategory = categoryRepository.findById(id);
+
+        if (!optionalCategory.isPresent()) {
+            throw new ApiException(ERROR.INVALID_PARAM, "Category not found");
+        }
+
+        if (optionalCategory.get().getIsRoot() == 0) {
+            for (Category category : optionalCategory.get().getParent()) {
+                category.getSubCategories().remove(optionalCategory.get());
+            }
+        }
+
+        Set<Category> subCategories ;
+
+        for (Category category : optionalCategory.get().getSubCategories()) {
+            if (category.getParent().size() == 1) {
+                this.deleteCategory(category.getId());
+            } else
+                category.getParent().remove(optionalCategory.get());
+        }
+
         categoryRepository.deleteById(id);
 
-        this.deleteCategoryImpl(id);
         return new BaseResponse<>();
     }
 
@@ -172,25 +243,4 @@ public class CategoryService {
         }
     }
 
-    private void deleteCategoryImpl(Long id) throws ApiException {
-        List<CategoryRelationship> listChildren = categoryRelationshipRepository.findAllChildrenByParentId(id);
-
-        if (CollectionUtils.isEmpty(listChildren))
-            return;
-
-        List<CategoryRelationship> deleteRelationship = new ArrayList<>();
-        for (CategoryRelationship cr : listChildren) {
-
-            long countParent = categoryRelationshipRepository.countParent(cr.getPk().getChildId());
-
-            if (countParent == 1) {
-                deleteRelationship.add(cr);
-                this.deleteCategoryImpl(cr.getPk().getChildId());
-            }
-        }
-
-        if (!CollectionUtils.isEmpty(deleteRelationship)) {
-            categoryRelationshipRepository.deleteAll(deleteRelationship);
-        }
-    }
 }

@@ -1,27 +1,37 @@
 package com.tasc.productservice.database.specification;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class SearchBody {
     private int page;
-    private int limit;
+
+    private int pageSize;
+
     private String name;
+
     private String description;
+
     private String sort;
+
+    private int isRoot;
 
     public final static class SearchBodyBuilder {
         private int page;
+
         private int limit;
+
         private String name;
+
         private String description;
+
         private String sort;
+
+        private int isRoot;
 
         private SearchBodyBuilder() {
         }
@@ -55,11 +65,17 @@ public class SearchBody {
             return this;
         }
 
+        public SearchBodyBuilder withIsRoot(int isRoot) {
+            this.isRoot = isRoot;
+            return this;
+        }
+
         public SearchBody build() {
             SearchBody searchBody = new SearchBody();
             searchBody.setPage(page);
-            searchBody.setLimit(limit);
+            searchBody.setPageSize(limit);
             searchBody.setName(name);
+            searchBody.setIsRoot(isRoot);
             searchBody.setDescription(description);
             searchBody.setSort(sort);
 

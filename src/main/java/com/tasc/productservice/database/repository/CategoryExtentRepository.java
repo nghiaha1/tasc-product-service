@@ -10,6 +10,12 @@ import java.util.List;
 public interface CategoryExtentRepository{
 //    void searchCategory(Integer isRoot, String name, Integer page, Integer pageSize, SearchCategoryResponse.Data data);
 
-    List<Category> findAll(SearchBody searchBody, SearchCategoryResponse.Data data);
+    List findParentByChild(SearchBody searchBody, SearchCategoryResponse.Data data);
+
+    List findChildByParent(SearchBody searchBody, SearchCategoryResponse.Data data);
+
+    void findAllUsingView(SearchBody searchBody, SearchCategoryResponse.Data data);
+
+    void findAll(SearchBody searchBody, SearchCategoryResponse.Data data);
 }
 

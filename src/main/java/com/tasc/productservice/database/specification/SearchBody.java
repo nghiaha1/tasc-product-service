@@ -12,6 +12,8 @@ public class SearchBody {
 
     private int pageSize;
 
+    private long id;
+
     private String name;
 
     private String description;
@@ -26,6 +28,8 @@ public class SearchBody {
         private int limit;
 
         private String name;
+
+        private long id;
 
         private String description;
 
@@ -55,6 +59,11 @@ public class SearchBody {
             return this;
         }
 
+        public SearchBodyBuilder withId(long id) {
+            this.id = id;
+            return this;
+        }
+
         public SearchBodyBuilder withDescription(String description) {
             this.description = description;
             return this;
@@ -74,6 +83,7 @@ public class SearchBody {
             SearchBody searchBody = new SearchBody();
             searchBody.setPage(page);
             searchBody.setPageSize(limit);
+            searchBody.setId(id);
             searchBody.setName(name);
             searchBody.setIsRoot(isRoot);
             searchBody.setDescription(description);

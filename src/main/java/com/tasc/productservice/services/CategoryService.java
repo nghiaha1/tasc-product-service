@@ -71,27 +71,26 @@ public class CategoryService {
         return new BaseResponse<>(responses);
     }
 
-//    @Transactional
-//    public SearchCategoryResponse search(Integer isRoot, String name, Integer page, Integer pageSize) {
-//        if (page == null || page < 1) {
-//            page = 1;
-//        } if (pageSize == null || page < 1) {
-//            pageSize = 10;
-//        }
-//
-//        SearchCategoryResponse.Data data = new SearchCategoryResponse.Data();
-//        data.setCurrentPage(page);
-//        data.setPageSize(pageSize);
-//
-//        categoryRepository.searchCategory(isRoot, name, page, pageSize, data);
-//
-//        SearchCategoryResponse response = new SearchCategoryResponse();
-//        response.setData(data);
-//        return response;
-//    }
+    public BaseResponse findParentByChild_1(long id) {
+        Optional<Category> optionalCategory = categoryRepository.findById(id);
+        if (!optionalCategory.isPresent()) {
+            throw new ApiException(ERROR.INVALID_PARAM, "Category not exists");
+        }
+
+        return new BaseResponse<>(categoryRepository.findParentByChild(id));
+    }
+
+    public BaseResponse findChildByParent_1(long id) {
+        Optional<Category> optionalCategory = categoryRepository.findById(id);
+        if (!optionalCategory.isPresent()) {
+            throw new ApiException(ERROR.INVALID_PARAM, "Category not exists");
+        }
+
+        return new BaseResponse<>(categoryRepository.findChildByParent(id));
+    }
 
     @Transactional
-    public BaseResponse search(SearchBody searchBody) {
+    public BaseResponse findParentByChild_2(SearchBody searchBody) {
 
         if (searchBody.getPage() < 1) {
             searchBody.setPage(1);
@@ -104,7 +103,74 @@ public class CategoryService {
         data.setCurrentPage(searchBody.getPage());
         data.setPageSize(searchBody.getPageSize());
 
-        return new BaseResponse(categoryRepository.findAll(searchBody, data));
+        SearchCategoryResponse response = new SearchCategoryResponse();
+        response.setData(data);
+
+        return new BaseResponse(categoryRepository.findParentByChild(searchBody, data));
+    }
+
+    @Transactional
+    public BaseResponse findChildByParent_2(SearchBody searchBody) {
+
+        if (searchBody.getPage() < 1) {
+            searchBody.setPage(1);
+        }
+        if (searchBody.getPageSize() < 1) {
+            searchBody.setPageSize(1);
+        }
+
+        SearchCategoryResponse.Data data = new SearchCategoryResponse.Data();
+        data.setCurrentPage(searchBody.getPage());
+        data.setPageSize(searchBody.getPageSize());
+
+        SearchCategoryResponse response = new SearchCategoryResponse();
+        response.setData(data);
+
+        return new BaseResponse(categoryRepository.findChildByParent(searchBody, data));
+    }
+
+    @Transactional
+    public SearchCategoryResponse findAllWithView(SearchBody searchBody) {
+
+        if (searchBody.getPage() < 1) {
+            searchBody.setPage(1);
+        }
+        if (searchBody.getPageSize() < 1) {
+            searchBody.setPageSize(1);
+        }
+
+        SearchCategoryResponse.Data data = new SearchCategoryResponse.Data();
+        data.setCurrentPage(searchBody.getPage());
+        data.setPageSize(searchBody.getPageSize());
+
+        categoryRepository.findAllUsingView(searchBody, data);
+
+        SearchCategoryResponse response = new SearchCategoryResponse();
+        response.setData(data);
+
+        return response;
+    }
+
+    @Transactional
+    public SearchCategoryResponse findAll(SearchBody searchBody) {
+
+        if (searchBody.getPage() < 1) {
+            searchBody.setPage(1);
+        }
+        if (searchBody.getPageSize() < 1) {
+            searchBody.setPageSize(1);
+        }
+
+        SearchCategoryResponse.Data data = new SearchCategoryResponse.Data();
+        data.setCurrentPage(searchBody.getPage());
+        data.setPageSize(searchBody.getPageSize());
+
+        categoryRepository.findAll(searchBody, data);
+
+        SearchCategoryResponse response = new SearchCategoryResponse();
+        response.setData(data);
+
+        return response;
     }
 
     @Transactional
@@ -202,7 +268,7 @@ public class CategoryService {
             }
         }
 
-        Set<Category> subCategories ;
+        Set<Category> subCategories;
 
         for (Category category : optionalCategory.get().getSubCategories()) {
             if (category.getParent().size() == 1) {

@@ -3,10 +3,13 @@ package com.tasc.productservice.database.entity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import com.tasc.productservice.database.entity.base.BaseEntity;
+import com.tasc.productservice.models.dto.CategoryInfo;
 import com.tasc.productservice.utils.Constant;
 import lombok.*;
 
 import javax.persistence.*;
+import java.math.BigInteger;
+import java.util.List;
 import java.util.Set;
 
 @Getter

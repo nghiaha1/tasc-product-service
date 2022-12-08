@@ -1,14 +1,22 @@
 package com.tasc.productservice.models.dto;
 
+import com.google.gson.Gson;
+import com.tasc.productservice.database.entity.Category;
 import lombok.*;
 
-import javax.persistence.SqlResultSetMapping;
-import java.util.List;
+import javax.persistence.Lob;
+import java.math.BigInteger;
+import java.util.Date;
+import java.util.Set;
 
+//@Getter
+//@Setter
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CategoryInfo {
 
-    private Integer id;
+    private BigInteger id;
 
     private String name;
 
@@ -18,28 +26,24 @@ public class CategoryInfo {
 
     private int is_root;
 
-    private List<CategoryInfo> parentId;
+    private Date create_at;
+    private Date update_at;
 
-    private List<CategoryInfo> children;
+    @Lob
+    private Set<Category> child;
 
-    public CategoryInfo() {
+    @Lob
+    private Set<Category> parent;
+
+    public void setChild(String child) {
+        Gson gson = new Gson();
+        Set<Category> childSet = gson.fromJson(child, Set.class);
+        this.child = childSet;
     }
 
-    public CategoryInfo(Integer id, String name, String icon, String description, int is_root) {
-        this.id = id;
-        this.name = name;
-        this.icon = icon;
-        this.description = description;
-        this.is_root = is_root;
-    }
-
-    public CategoryInfo(Integer id, String name, String icon, String description, int is_root, List<CategoryInfo> parentId, List<CategoryInfo> children) {
-        this.id = id;
-        this.name = name;
-        this.icon = icon;
-        this.description = description;
-        this.is_root = is_root;
-        this.parentId = parentId;
-        this.children = children;
+    public void setParent(String parent) {
+        Gson gson = new Gson();
+        Set<Category> parentSet = gson.fromJson(parent, Set.class);
+        this.parent = parentSet;
     }
 }

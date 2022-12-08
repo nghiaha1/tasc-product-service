@@ -1,5 +1,6 @@
 package com.tasc.productservice.database.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.tasc.productservice.database.entity.base.BaseEntity;
 import com.tasc.productservice.database.entity.enums.Status;
 import lombok.AllArgsConstructor;
@@ -37,6 +38,14 @@ public class Product extends BaseEntity {
     private BigDecimal price;
 
     private int quantity;
+
+    @ManyToMany(mappedBy = "productSet")
+    @JsonBackReference
+    private Set<Category> categorySet;
+
+    @ManyToOne
+    @JoinColumn(name = "gln_id", referencedColumnName = "id")
+    private Gln gln;
 
     private Status status;
 }
